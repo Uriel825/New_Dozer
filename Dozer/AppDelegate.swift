@@ -10,6 +10,13 @@ import Preferences
 
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Sparkle 2 updater. Starts on creation and reads SUFeedURL / SUPublicEDKey from Info.plist.
+    let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
+
     func applicationDidFinishLaunching(_: Notification) {
         MASShortcutBinder.shared()?.bindShortcut(withDefaultsKey: UserDefaultKeys.Shortcuts.ToggleMenuItems) { () in
             DozerIcons.shared.toggle()

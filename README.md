@@ -59,4 +59,12 @@ There are 2 or 3, numbered from right to left:
 <!-- **Checkout [this GIF](https://raw.githubusercontent.com/Mortennn/Dozer/master/Stuff/demo.gif) to watch Dozer in action.** -->
 
 ## 📄 Requirements
-macOS 10.13+
+macOS 13+. Universal binary (native Apple silicon, Intel still supported), so it keeps working without Rosetta on macOS 28.
+
+## 🛠 Building
+
+```shell
+make build   # installs tools, generates the Xcode project and opens it
+```
+
+Dependencies are resolved with Swift Package Manager. Requires Xcode 15 or newer.

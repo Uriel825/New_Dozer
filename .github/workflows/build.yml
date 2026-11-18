@@ -1,0 +1,68 @@
+name: Build universal app
+
+on:
+  push:
+    branches: [master, apple-silicon]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen swiftgen swiftlint
+
+      - name: Generate project
+        run: |
+          mkdir -p Dozer/Other/Generated
+          swiftgen
+          xcodegen
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Build (Release, universal, ad-hoc signed)
+        run: |
+          xcodebuild \
+            -project Dozer.xcodeproj \
+            -scheme Dozer \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-" \
+            DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Verify architectures
+        run: |
+          APP="build/Build/Products/Release/Dozer.app"
+          echo "Main binary:"
+          lipo -archs "$APP/Contents/MacOS/Dozer"
+          echo "Embedded frameworks:"
+          for f in "$APP"/Contents/Frameworks/*.framework; do
+            name=$(basename "$f" .framework)
+            bin=$(find "$f" -type f -name "$name" -perm -u+x | head -n 1)
+            echo "$name: $(lipo -archs "$bin")"
+          done
+          ARCHS=$(lipo -archs "$APP/Contents/MacOS/Dozer")
+          case "$ARCHS" in *arm64*) ;; *) echo "::error::arm64 slice missing"; exit 1;; esac
+          case "$ARCHS" in *x86_64*) ;; *) echo "::error::x86_64 slice missing"; exit 1;; esac
+          codesign --verify --deep --strict "$APP" && echo "codesign OK (ad hoc)"
+
+      - name: Package
+        run: ditto -c -k --keepParent build/Build/Products/Release/Dozer.app Dozer-universal.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dozer-universal
+          path: Dozer-universal.zip

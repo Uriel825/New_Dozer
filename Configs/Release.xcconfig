@@ -1,2 +1,6 @@
 SWIFT_COMPILATION_MODE=wholemodule
 SWIFT_OPTIMIZATION_LEVEL=-O
+
+// Universal binary: native on Apple silicon, still runs on Intel Macs.
+ARCHS = arm64 x86_64
+ONLY_ACTIVE_ARCH = NO

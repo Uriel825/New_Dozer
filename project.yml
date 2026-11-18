@@ -3,31 +3,46 @@ options:
   usesTabs: false
   tabWidth: 4
   createIntermediateGroups: true
-  xcodeVersion: 10.2.1
-  deploymentTarget: 10.13
+  deploymentTarget:
+    macOS: "13.0"
+packages:
+  # Versions kept on purpose: the code uses the Defaults 4.x and Preferences 2.2.x APIs.
+  Defaults:
+    url: https://github.com/sindresorhus/Defaults
+    exactVersion: 4.2.2
+  Preferences:
+    url: https://github.com/sindresorhus/Preferences
+    exactVersion: 2.2.1
+  # SMAppService based. Needs macOS 13+, no helper app and no run script.
+  LaunchAtLogin:
+    url: https://github.com/sindresorhus/LaunchAtLogin-Modern
+    majorVersion: 1.1.0
+  # 2.4.0 has no Package.swift; this is a commit on master that does.
+  MASShortcut:
+    url: https://github.com/shpakovski/MASShortcut
+    revision: 6f2603c6b6cc18f64a799e5d2c9d3bbc467c413a
+  # Sparkle 2 (universal binary, SPM). Requires macOS 12+.
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    majorVersion: 2.10.1
 targets:
   Dozer:
     type: application
     platform: macOS
-    deploymentTarget: 
-      macOS: 10.13
+    deploymentTarget: "13.0"
     configFiles:
       Debug: Configs/Debug.xcconfig
       Release: Configs/Release.xcconfig
     sources:
       - Dozer
-    postBuildScripts:
-      - path: Scripts/LaunchAtLogin.sh
-        name: Launch At Login
-        runOnlyWhenInstalling: true
-      - path: Scripts/SignFrameworks.sh
-        name: Sign Frameworks
-        runOnlyWhenInstalling: true
-        runOnlyWhenInstalling: true
-      - script: /usr/local/bin/swiftgen
+    preBuildScripts:
+      - path: Scripts/SwiftGen.sh
         name: Generate files using SwiftGen
+        basedOnDependencyAnalysis: false
+    postBuildScripts:
       - path: Scripts/Swiftlint.sh
         name: Swiftlint
+        basedOnDependencyAnalysis: false
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Dozer/Other/Dozer.entitlements
@@ -35,15 +50,17 @@ targets:
         SWIFT_VERSION: 5
         DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
         ENABLE_HARDENED_RUNTIME: true
-        MACOSX_DEPLOYMENT_TARGET: 10.13
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
         VERSIONING_SYSTEM: apple-generic
         CURRENT_PROJECT_VERSION: 30
+        # The SwiftGen / SwiftLint scripts read and write inside the source tree.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
     dependencies:
-      - carthage: LaunchAtLogin
-      - carthage: Defaults
-      - carthage: Preferences
-      - carthage: MASShortcut
-      - carthage: Sparkle
+      - package: LaunchAtLogin
+      - package: Defaults
+      - package: Preferences
+      - package: MASShortcut
+      - package: Sparkle
 schemes:
   Dozer:
     build:

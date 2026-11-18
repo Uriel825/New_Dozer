@@ -18,6 +18,10 @@ final class General: NSViewController, PreferencePane {
 
     fileprivate var userShortCut: MASShortcut!
 
+    private var updater: SPUUpdater? {
+        (NSApp.delegate as? AppDelegate)?.updaterController.updater
+    }
+
     @IBOutlet private var LaunchAtLoginCheckbox: NSButton!
     @IBOutlet private var CheckForUpdatesCheckbox: NSButton!
     @IBOutlet private var HideStatusBarIconsAtLaunchCheckbox: NSButton!
@@ -36,11 +40,7 @@ final class General: NSViewController, PreferencePane {
         LaunchAtLoginCheckbox.focusRingType = .none
 
         LaunchAtLoginCheckbox.isChecked = LaunchAtLogin.isEnabled
-        if SUUpdater.shared() != nil {
-            CheckForUpdatesCheckbox.isChecked = SUUpdater.shared()!.automaticallyChecksForUpdates
-        } else {
-            CheckForUpdatesCheckbox.isChecked = false
-        }
+        CheckForUpdatesCheckbox.isChecked = updater?.automaticallyChecksForUpdates ?? false
 
         HideStatusBarIconsAtLaunchCheckbox.isChecked = Defaults[.hideAtLaunchEnabled]
         HideStatusBarIconsAfterDelayCheckbox.isChecked = Defaults[.hideAfterDelayEnabled]
@@ -66,11 +66,11 @@ final class General: NSViewController, PreferencePane {
     }
 
     @IBAction private func automaticallyCheckForUpdatesClicked(_ sender: NSButton) {
-        guard SUUpdater.shared() != nil else {
+        guard let updater = updater else {
             CheckForUpdatesCheckbox.isChecked = false
             return
         }
-        SUUpdater.shared()!.automaticallyChecksForUpdates = CheckForUpdatesCheckbox.isChecked
+        updater.automaticallyChecksForUpdates = CheckForUpdatesCheckbox.isChecked
     }
 
     @IBAction private func hideStatusBarIconsAtLaunchClicked(_ sender: NSButton) {
